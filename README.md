@@ -1,5 +1,5 @@
 # Dog Breed Classifier 
-
+Les identifiants azure ont été enlevés par soucis de sécurité
 Une application web pour classifier les races de chiens utilisant plusieurs modèles de Deep Learning.
 
 ##  Fonctionnalités
