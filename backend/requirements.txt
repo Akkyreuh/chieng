@@ -1,0 +1,12 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pillow==10.0.1
+numpy==1.24.3
+aiofiles
+tensorflow
+torch
+torchvision
+transformers
+pandas==2.0.3
+azure-cognitiveservices-vision-customvision==3.1.1

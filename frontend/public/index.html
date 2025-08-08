@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificateur de Races de Chiens</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .model-status {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .upload-zone {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: #e8f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .image-preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .predict-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .predict-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .predict-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .analysis-info {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .model-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .model-card.huggingface {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+        }
+
+        .model-card.mpo {
+            border-color: #4ecdc4;
+            background: linear-gradient(135deg, #f0fffe 0%, #e0fffc 100%);
+        }
+
+        .model-card.azure {
+            border-color: #0078d4;
+            background: linear-gradient(135deg, #f0f8ff 0%, #e0f0ff 100%);
+        }
+
+        .model-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .model-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .model-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .model-badge.huggingface {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .model-badge.mpo {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .model-badge.azure {
+            background: #0078d4;
+            color: white;
+        }
+
+        .predictions {
+            list-style: none;
+        }
+
+        .prediction-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .prediction-item:last-child {
+            border-bottom: none;
+        }
+
+        .prediction-rank {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rank-icon {
+            font-size: 1.2rem;
+        }
+
+        .breed-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .confidence {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #fcc;
+        }
+
+        .reset-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-button:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .upload-section, .results-section {
+                padding: 20px;
+            }
+            
+            .models-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Classificateur de Races de Chiens</h1>
+            <p>Analysez votre image avec nos modèles d'intelligence artificielle</p>
+            <div class="model-status" id="modelStatus">
+                Chargement des modèles...
+            </div>
+        </header>
+
+        <section class="upload-section">
+            <div class="upload-zone" id="dropzone">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Glissez votre image ici ou cliquez pour sélectionner</div>
+                <div class="upload-hint">Formats supportés: JPG, PNG, GIF (max 10MB)</div>
+            </div>
+            
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            
+            <div class="image-preview" id="imagePreview" style="display: none;">
+                <img id="previewImg" class="preview-image" alt="Preview">
+                <div class="file-info" id="fileInfo"></div>
+                <button class="predict-button" id="predictButton">Analyser l'image</button>
+                <button class="reset-button" id="resetButton">Nouvelle image</button>
+            </div>
+        </section>
+
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p>Analyse en cours...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <section class="results-section" id="results">
+            <div class="results-header">
+                <h2>Résultats de l'analyse</h2>
+                <div class="analysis-info" id="analysisInfo"></div>
+            </div>
+            <div class="models-grid" id="modelsGrid"></div>
+        </section>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const fileInfo = document.getElementById('fileInfo');
+        const predictButton = document.getElementById('predictButton');
+        const resetButton = document.getElementById('resetButton');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const modelsGrid = document.getElementById('modelsGrid');
+        const modelStatus = document.getElementById('modelStatus');
+        const analysisInfo = document.getElementById('analysisInfo');
+
+        async function loadModelStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/models/status`);
+                const data = await response.json();
+                const modelCount = Object.keys(data.models).length;
+                const loadedModels = Object.values(data.models).filter(model => model.loaded).length;
+                
+                modelStatus.innerHTML = `
+                    <strong>${loadedModels}/${modelCount} modèles chargés</strong><br>
+                    <small>Prêt pour l'analyse</small>
+                `;
+            } catch (err) {
+                modelStatus.innerHTML = '<strong>Erreur de connexion au serveur</strong>';
+            }
+        }
+
+        loadModelStatus();
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Veuillez sélectionner un fichier image valide.');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                showError('Le fichier est trop volumineux. Taille maximale: 10MB.');
+                return;
+            }
+            
+            showImagePreview(file);
+        }
+
+        function showImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                fileInfo.innerHTML = `
+                    <strong>${file.name}</strong><br>
+                    Taille: ${formatFileSize(file.size)} | Type: ${file.type}
+                `;
+                imagePreview.style.display = 'block';
+                hideError();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        predictButton.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                predictBreed(file);
+            }
+        });
+
+        async function predictBreed(file) {
+            showLoading();
+            hideError();
+            hideResults();
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                showError(`Erreur lors de l'analyse: ${err.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResults(data) {
+            const modelCount = Object.keys(data.predictions).length;
+            analysisInfo.textContent = `Analyse effectuée avec ${modelCount} modèle${modelCount > 1 ? 's' : ''}`;
+            
+            modelsGrid.innerHTML = '';
+            
+            Object.entries(data.predictions).forEach(([modelName, predictions]) => {
+                const modelCard = document.createElement('div');
+                modelCard.className = 'model-card';
+                
+                let badgeClass = '';
+                let badgeText = '';
+                let displayName = modelName;
+                
+                if (modelName.includes('huggingface')) {
+                    badgeClass = 'huggingface';
+                    badgeText = 'PRÉ-ENTRAÎNÉ';
+                    displayName = 'HuggingFace ResNet50';
+                    modelCard.classList.add('huggingface');
+                } else if (modelName.includes('MPO')) {
+                    badgeClass = 'mpo';
+                    badgeText = 'FROM SCRATCH';
+                    displayName = 'MPO Custom Model';
+                    modelCard.classList.add('mpo');
+                } else if (modelName.includes('Azure')) {
+                    badgeClass = 'azure';
+                    badgeText = 'AZURE CLOUD';
+                    displayName = 'Azure Custom Vision';
+                    modelCard.classList.add('azure');
+                }
+                
+                const predictionsHTML = predictions.map((pred, index) => `
+                    <li class="prediction-item">
+                        <div class="prediction-rank">
+                            <span class="rank-icon">${getRankIcon(index + 1)}</span>
+                            <span class="breed-name">${pred.breed}</span>
+                        </div>
+                        <span class="confidence">${pred.percentage}%</span>
+                    </li>
+                `).join('');
+                
+                modelCard.innerHTML = `
+                    <div class="model-header">
+                        <div class="model-name">${displayName}</div>
+                        <div class="model-badge ${badgeClass}">${badgeText}</div>
+                    </div>
+                    <ul class="predictions">
+                        ${predictionsHTML}
+                    </ul>
+                `;
+                
+                modelsGrid.appendChild(modelCard);
+            });
+            
+            results.style.display = 'block';
+        }
+
+        function getRankIcon(rank) {
+            const icons = ['🥇', '🥈', '🥉'];
+            return icons[rank - 1] || `${rank}.`;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            error.style.display = 'none';
+        }
+
+        function hideResults() {
+            results.style.display = 'none';
+        }
+
+        function resetUpload() {
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+            hideError();
+            hideResults();
+            hideLoading();
+        }
+
+        resetButton.addEventListener('click', resetUpload);
+    </script>
+</body>
+</html>
